@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>view Accounts</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" 
+    rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary shadow">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1"> Bank Management System</span>
+            <a href="/dashboard" class="btn btn-light">Dashboard</a>
+        </div>
+    </nav>
+    <div class="container my-5">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-dark text-white">
+                <h3 class="mb-0 text-center" Customer Accounts></h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <input type="text"  id="searchInput" class="form-control"
+                     placeholder="Search customer by name..">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle" 
+                    id="accountTable">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Account No.</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody> 
+                        {% for account in customers %}
+                        <tr>
+                            <td> 
+                                {{account[0]}}
+                            </td>
+                            <td>
+                                {{ account[1] }}
+                            </td>
+                            <td>
+                                {{ account[2] }}
+                            </td>
+                            <td>
+                                {{ account[3] }}
+                            </td>
+                            <td>
+                                {{ account[4] }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+       
+    const searchInput = document.getElementById("searchInput");
+    const table = document.getElementById("accountTable");
+
+    searchInput.addEventListener("keyup", function () {
+        const searchValue = this.value.toLowerCase();
+        const rows = table.querySelectorAll("tbody tr");
+
+        rows.forEach(function (row) {
+            const name = row.cells[1].textContent.toLowerCase();
+
+            if (name.includes(searchValue)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    });
+    </script>
+</body>
+</html>
