@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Transfer Money - NOVA BANK</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-6">
+
+            <div class="card shadow">
+
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">NOVA BANK</h4>
+                    <small>Transfer Money</small>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <form method="POST" action="/transfer">
+
+                        <!-- Sender Account -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Sender Account Number
+                            </label>
+
+                            <input type="number"
+                                   name="sender_account"
+                                   class="form-control"
+                                   placeholder="Enter sender account number"
+                                   required>
+                        </div>
+
+                        <!-- Receiver Account -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Receiver Account Number
+                            </label>
+
+                            <input type="number"
+                                   name="receiver_account"
+                                   class="form-control"
+                                   placeholder="Enter receiver account number"
+                                   required>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Transfer Amount
+                            </label>
+
+                            <input type="number"
+                                   name="amount"
+                                   class="form-control"
+                                   placeholder="Enter amount"
+                                   min="1"
+                                   required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                Transfer Money
+                            </button>
+                        </div>
+
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('dashboard') }}"
+                           class="text-decoration-none">
+                            ← Back to Dashboard
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

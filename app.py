@@ -322,5 +322,127 @@ def delete_customer():
         con.commit()
         return render_template("delete_success.html")    
     return render_template("delete_customer.html")
+@app.route("/transfer", methods=["GET", "POST"])
+def transfer():
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("login"))
+
+    if request.method == "GET":
+        return render_template("transfer.html")
+
+    sender_account = request.form["sender_account"]
+    receiver_account = request.form["receiver_account"]
+    amount = request.form["amount"]
+
+    # Convert amount to integer
+    try:
+        amount = int(amount)
+    except ValueError:
+        return "Invalid amount"
+
+    # Basic validation
+    if amount <= 0:
+        return "Amount must be greater than 0"
+
+    if sender_account == receiver_account:
+        return "Sender and receiver account cannot be same"
+
+    try:
+
+        # Start database transaction
+        con.start_transaction()
+
+        # Check sender account and lock row
+        cursor.execute(
+            """
+            SELECT balance
+            FROM accounts
+            WHERE account_no = %s
+            FOR UPDATE
+            """,
+            (sender_account,)
+        )
+
+        sender = cursor.fetchone()
+
+        if not sender:
+            con.rollback()
+            return "Sender account not found"
+
+        sender_balance = sender[0]
+
+        # Check receiver account
+        cursor.execute(
+            """
+            SELECT account_no
+            FROM accounts
+            WHERE account_no = %s
+            FOR UPDATE
+            """,
+            (receiver_account,)
+        )
+
+        receiver = cursor.fetchone()
+
+        if not receiver:
+            con.rollback()
+            return "Receiver account not found"
+
+        # Check sufficient balance
+        if sender_balance < amount:
+            con.rollback()
+            return "Insufficient balance"
+
+        # Deduct money from sender
+        cursor.execute(
+            """
+            UPDATE accounts
+            SET balance = balance - %s
+            WHERE account_no = %s
+            """,
+            (amount, sender_account)
+        )
+
+        # Add money to receiver
+        cursor.execute(
+            """
+            UPDATE accounts
+            SET balance = balance + %s
+            WHERE account_no = %s
+            """,
+            (amount, receiver_account)
+        )
+
+        # Sender transaction
+        cursor.execute(
+            """
+            INSERT INTO transactions
+            (account_no, transaction_type, amount)
+            VALUES (%s, %s, %s)
+            """,
+            (sender_account, "TRANSFER OUT", amount)
+        )
+
+        # Receiver transaction
+        cursor.execute(
+            """
+            INSERT INTO transactions
+            (account_no, transaction_type, amount)
+            VALUES (%s, %s, %s)
+            """,
+            (receiver_account, "TRANSFER IN", amount)
+        )
+
+        # Save all changes
+        con.commit()
+
+        return redirect(url_for("dashboard"))
+
+    except Exception as e:
+
+        con.rollback()
+
+        return f"Transfer failed: {e}"
 if __name__ == "__main__":
     app.run(debug=True)
