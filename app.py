@@ -46,23 +46,50 @@ def login():
          return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
 
-@app.route("/add_customer", methods=["GET","POST"])
+@app.route("/add_customer", methods=["GET", "POST"])
 def add_customer():
+
     if not session.get("admin_logged_in"):
-           return redirect(url_for("login"))
-    if request.method=="POST":
-        account_no=request.form["account_no"]
-        name=request.form["name"]
-        phone=request.form["phone"]
-        address=request.form["address"]
-        username=request.form["username"]
-        balance=request.form["balance"]
-        cursor.execute(""" INSERT INTO accounts(account_no,name,phone,address,balance,username)
-        VALUES (%s,%s,%s,%s,%s,%s) """,
-        (account_no,name,phone,address,balance))
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+
+        account_no = request.form["account_no"]
+        name = request.form["name"]
+        phone = request.form["phone"]
+        address = request.form["address"]
+        username = request.form["username"]
+        balance = request.form["balance"]
+        # Validation
+        if int(balance) < 0 or int(balance) > 50000:
+            return "Initial balance must be between ₹0 and ₹50,000"
+        
+        if len(phone) != 10 or not phone.isdigit():
+            return "Invalid phone number"
+
+        if int(balance) < 0:
+            return "Balance cannot be negative"
+
+        # Duplicate account check
+        cursor.execute(
+            "SELECT account_no FROM accounts WHERE account_no=%s",
+            (account_no,)
+        )
+
+        if cursor.fetchone():
+            return "Account Number Already Exists"
+
+        # Insert customer
+        cursor.execute("""
+            INSERT INTO accounts
+            (account_no, name, phone, address, balance, username)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (account_no, name, phone, address, balance, username))
+
         con.commit()
         return render_template("success.html")
-    return render_template("add_customer.html") 
+
+    return render_template("add_customer.html")
 
 @app.route("/view_customer",methods=["GET","POST"])
 def view_customer():
@@ -78,13 +105,15 @@ def dashboard():
     if not session.get("admin_logged_in"):
         return redirect(url_for("login"))
 
-    cursor.execute(" SELECT COUNT(*) FROM accounts")
-    accounts_count=cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM accounts")
+    accounts_count = cursor.fetchone()[0]
+
     cursor.execute("SELECT COUNT(*) FROM customers")
     customers_count = cursor.fetchone()[0]
-    total_customers=accounts_count+customers_count
 
-    cursor.execute("SELECT COALESCE(SUM(balance), 0) FROM customers")
+    total_customers = accounts_count + customers_count
+
+    cursor.execute("SELECT COALESCE(SUM(balance),0) FROM accounts")
     total_balance = cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM transactions")
@@ -97,7 +126,7 @@ def dashboard():
         total_transactions=total_transactions
     )
 
-
+#<-------------- Logout ------------->
 @app.route("/logout")
 def logout():
     session.clear()
@@ -322,6 +351,8 @@ def delete_customer():
         con.commit()
         return render_template("delete_success.html")    
     return render_template("delete_customer.html")
+
+# <--------------Transfer money -------------->
 @app.route("/transfer", methods=["GET", "POST"])
 def transfer():
 
@@ -351,6 +382,7 @@ def transfer():
     try:
 
         # Start database transaction
+        con.rollback()
         con.start_transaction()
 
         # Check sender account and lock row
@@ -437,7 +469,7 @@ def transfer():
         # Save all changes
         con.commit()
 
-        return redirect(url_for("dashboard"))
+        return render_template("transfer_successfull.html",amount=amount)
 
     except Exception as e:
 
